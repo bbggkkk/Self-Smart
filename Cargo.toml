@@ -1,0 +1,57 @@
+[package]
+name = "self-smart"
+version = "0.1.0"
+edition = "2021"
+description = "Self-improving AI coding agent powered by local LLM"
+license = "MIT"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client for vLLM - use rustls to avoid OpenSSL dependency
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Git operations - disable curl feature to avoid OpenSSL
+gix = { version = "0.71", default-features = false, features = ["max-performance-safe", "basic"] }
+
+# Code parsing
+tree-sitter = "0.24"
+tree-sitter-rust = "0.23"
+tree-sitter-python = "0.23"
+
+# Terminal UI
+ratatui = "0.29"
+crossterm = "0.28"
+
+# File operations
+walkdir = "2"
+ignore = "0.4"
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# UUID for session tracking
+uuid = { version = "1", features = ["v4"] }
+
+# Async trait support
+async-trait = "0.1"
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
