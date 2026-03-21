@@ -33,6 +33,18 @@ struct Cli {
     #[arg(long)]
     stream: bool,
 
+    /// Use ReAct agent for multi-step reasoning
+    #[arg(long)]
+    react: bool,
+
+    /// Maximum iterations for ReAct agent
+    #[arg(long, default_value = "10")]
+    max_iterations: usize,
+
+    /// Verbose output for ReAct agent
+    #[arg(long)]
+    verbose: bool,
+
     /// Prompt or task to execute
     #[arg(short, long)]
     prompt: Option<String>,
@@ -57,19 +69,35 @@ async fn main() -> Result<()> {
         auto_commit: cli.auto_commit,
     };
 
-    let mut agent = agent::Agent::new(config).await?;
-
     if let Some(prompt) = cli.prompt {
-        if cli.stream {
-            agent.run_streaming(&prompt).await?;
+        if cli.react {
+            // Use ReAct agent for multi-step reasoning
+            let mut react_agent = agent::react::ReActAgent::new(
+                &config,
+                cli.max_iterations,
+                cli.verbose,
+            ).await?;
+            let result = react_agent.run(&prompt).await?;
+            println!("\nFinal answer:\n{}", result);
         } else {
-            agent.run(&prompt).await?;
+            // Use standard agent
+            let mut agent = agent::Agent::new(config).await?;
+            if cli.stream {
+                agent.run_streaming(&prompt).await?;
+            } else {
+                agent.run(&prompt).await?;
+            }
         }
     } else if cli.interactive {
+        let mut agent = agent::Agent::new(config).await?;
         agent.interactive().await?;
     } else {
         println!("Self-Smart agent ready. Use --prompt or --interactive to start.");
         println!("Run with --help for usage information.");
+        println!("\nExamples:");
+        println!("  self-smart --prompt 'Analyze src/main.rs'");
+        println!("  self-smart --react --verbose --prompt 'Fix all bugs in src/'");
+        println!("  self-smart --interactive");
     }
 
     Ok(())

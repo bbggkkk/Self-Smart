@@ -1,4 +1,5 @@
 pub mod loop_engine;
+pub mod react;
 
 use crate::config::Config;
 use crate::git::GitManager;
