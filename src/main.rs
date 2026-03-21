@@ -29,6 +29,10 @@ struct Cli {
     #[arg(long)]
     auto_commit: bool,
 
+    /// Enable streaming output
+    #[arg(long)]
+    stream: bool,
+
     /// Prompt or task to execute
     #[arg(short, long)]
     prompt: Option<String>,
@@ -56,7 +60,11 @@ async fn main() -> Result<()> {
     let mut agent = agent::Agent::new(config).await?;
 
     if let Some(prompt) = cli.prompt {
-        agent.run(&prompt).await?;
+        if cli.stream {
+            agent.run_streaming(&prompt).await?;
+        } else {
+            agent.run(&prompt).await?;
+        }
     } else if cli.interactive {
         agent.interactive().await?;
     } else {

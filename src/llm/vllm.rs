@@ -1,4 +1,4 @@
-use super::{ChatRequest, ChatResponse, LlmClient, Message};
+use super::{ChatRequest, ChatResponse, LlmClient, Message, Usage};
 use anyhow::Result;
 use reqwest::Client;
 use serde_json::Value;
@@ -16,6 +16,14 @@ impl VllmClient {
             endpoint: endpoint.trim_end_matches('/').to_string(),
             model: model.to_string(),
         }
+    }
+
+    pub fn endpoint(&self) -> &str {
+        &self.endpoint
+    }
+
+    pub fn model(&self) -> &str {
+        &self.model
     }
 
     pub async fn health_check(&self) -> Result<bool> {
@@ -37,17 +45,19 @@ impl VllmClient {
             .collect();
         Ok(models)
     }
-}
 
-#[async_trait::async_trait]
-impl LlmClient for VllmClient {
-    async fn chat(&self, messages: Vec<Message>) -> Result<String> {
+    pub async fn chat_with_params(
+        &self,
+        messages: Vec<Message>,
+        temperature: f32,
+        max_tokens: u32,
+    ) -> Result<ChatResponse> {
         let url = format!("{}/v1/chat/completions", self.endpoint);
         let request = ChatRequest {
             model: self.model.clone(),
             messages,
-            temperature: Some(0.7),
-            max_tokens: Some(4096),
+            temperature: Some(temperature),
+            max_tokens: Some(max_tokens),
             stream: Some(false),
         };
 
@@ -60,11 +70,29 @@ impl LlmClient for VllmClient {
             .json()
             .await?;
 
+        Ok(response)
+    }
+}
+
+#[async_trait::async_trait]
+impl LlmClient for VllmClient {
+    async fn chat(&self, messages: Vec<Message>) -> Result<String> {
+        let response = self.chat_with_params(messages, 0.7, 4096).await?;
         Ok(response
             .choices
             .first()
             .map(|c| c.message.content.clone())
             .unwrap_or_default())
+    }
+
+    async fn chat_with_usage(&self, messages: Vec<Message>) -> Result<(String, Option<Usage>)> {
+        let response = self.chat_with_params(messages, 0.7, 4096).await?;
+        let content = response
+            .choices
+            .first()
+            .map(|c| c.message.content.clone())
+            .unwrap_or_default();
+        Ok((content, response.usage))
     }
 
     async fn chat_stream(
