@@ -164,8 +164,8 @@ impl Agent {
                 }
                 "tools" => {
                     println!("\nAvailable tools:");
-                    for (name, desc) in self.tools.list_tools() {
-                        println!("  {} - {}", name, desc);
+                    for tool_info in self.tools.list_tools() {
+                        println!("  {}", tool_info);
                     }
                     continue;
                 }
@@ -234,7 +234,7 @@ impl Agent {
         let tools_desc = tools
             .list_tools()
             .iter()
-            .map(|(name, desc)| format!("- {}: {}", name, desc))
+            .map(|info| format!("- {}: {}", info.name, info.description))
             .collect::<Vec<_>>()
             .join("\n");
 

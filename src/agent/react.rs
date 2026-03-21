@@ -235,7 +235,7 @@ impl ReActAgent {
         let tools_desc = tools
             .list_tools()
             .iter()
-            .map(|(name, desc)| format!("- {}: {}", name, desc))
+            .map(|info| format!("- {}: {}", info.name, info.description))
             .collect::<Vec<_>>()
             .join("\n");
 
